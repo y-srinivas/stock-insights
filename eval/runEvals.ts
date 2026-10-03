@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { createStockAgents } from "../src/agents/stockAgents.js";
-import { runStockWorkflow } from "../src/workflow/stockWorkflow.js";
+import { createStockAgents } from "../src/agents/stockAgents.ts";
+import { runStockWorkflow } from "../src/workflow/stockWorkflow.ts";
 import { runAssertions } from "./assertions.js";
 import { scenarios } from "./scenarios.js";
 import type { StockWorkflowState } from "../src/types/workflow.d.ts";

@@ -3,7 +3,7 @@ import type { DefaultApi } from "finnhub";
 import type { MarketDataSnapshot, SymbolResolution, SymbolSearchResult } from "../types/marketData.d.ts";
 
 import { DEFAULT_SYMBOL, FINNHUB_API_KEY, MARKET_DATA_PROVIDER } from "../config.js";
-import { getStockSnapshotFromMcp, searchSymbolsFromMcp } from "./marketDataMcp.js";
+import { getStockSnapshotFromMcp, searchSymbolsFromMcp } from "./marketDataMcp.ts";
 
 type CandleData = { s?: string; t?: number[]; c?: Array<number | null> };
 

@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { StockWorkflowState } from "./types/workflow.d.ts";
 
-import { runStockWorkflow } from "./workflow/stockWorkflow.js";
+import { runStockWorkflow } from "./workflow/stockWorkflow.ts";
 
 const app = express();
 const preferredPort = Number(process.env.PORT || 3000);

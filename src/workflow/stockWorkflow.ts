@@ -1,8 +1,8 @@
 import { END, START, StateGraph, Annotation } from "@langchain/langgraph";
 import type { RunStockWorkflowOptions, StockWorkflowState, WorkflowAgents } from "../types/workflow.d.ts";
 
-import { getStockSnapshot, resolveSymbolForQuestion } from "../lib/marketData.js";
-import { researchAgent, riskAgent, summaryAgent } from "../agents/stockAgents.js";
+import { getStockSnapshot, resolveSymbolForQuestion } from "../lib/marketData.ts";
+import { researchAgent, riskAgent, summaryAgent } from "../agents/stockAgents.ts";
 
 function asWorkflowState(state: unknown): StockWorkflowState {
   return state as StockWorkflowState;
