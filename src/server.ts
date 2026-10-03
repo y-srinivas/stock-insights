@@ -1,6 +1,7 @@
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { StockWorkflowState } from "./types/workflow.d.ts";
 
 import { runStockWorkflow } from "./workflow/stockWorkflow.js";
 
@@ -18,7 +19,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", service: "stock-insights-agent" });
 });
 
-function extractTickerFromText(text) {
+function extractTickerFromText(text: string): string | null {
   const matches = [...text.matchAll(/\b[A-Z]{1,6}\b/g)]
     .map((match) => match[0].toUpperCase())
     .filter((token) => token !== "I" && token !== "A" && token !== "IS" && token !== "TO" && token !== "ON");
@@ -26,7 +27,7 @@ function extractTickerFromText(text) {
   return matches.length ? matches[matches.length - 1] : null;
 }
 
-function escapeHtml(value) {
+function escapeHtml(value: unknown): string {
   return String(value || "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -35,7 +36,7 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function formatAnswerAsHtml(workflowResult, question) {
+function formatAnswerAsHtml(workflowResult: StockWorkflowState, question: string): string {
   const answer = String(workflowResult.finalAnswer || "I could not generate a stock insight for this request.");
   const answerHtml = escapeHtml(answer).replaceAll("\n", "<br>");
   const symbol = escapeHtml(workflowResult.symbol || "");
@@ -62,12 +63,13 @@ app.post("/api/chat", async (req, res) => {
       return res.status(400).type("text/plain").send("A question is required.");
     }
 
-    const workflowResult = await runStockWorkflow(symbolHint, { question });
+    const workflowResult = (await runStockWorkflow(symbolHint, { question })) as StockWorkflowState;
     const html = formatAnswerAsHtml(workflowResult, question);
     return res.status(200).type("text/html").send(html);
   } catch (error) {
     console.error("Chat request failed:", error);
-    return res.status(500).type("text/plain").send(error.message || "Failed to process stock analysis request.");
+    const message = error instanceof Error ? error.message : "Failed to process stock analysis request.";
+    return res.status(500).type("text/plain").send(message);
   }
 });
 
@@ -75,7 +77,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
-function startServer(port, attemptsLeft = 10) {
+function startServer(port: number, attemptsLeft = 10): void {
   const server = app.listen(port, () => {
     console.log(`Stock insights chat UI is running at http://localhost:${port}`);
   });

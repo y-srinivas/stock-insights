@@ -152,13 +152,14 @@ Generated reports:
 ```text
 src/
   agents/
-    stockAgents.js
+    stockAgents.ts
   lib/
-    marketData.js
+    marketData.ts
+    marketDataMcp.ts
   workflow/
-    stockWorkflow.js
+    stockWorkflow.ts
   config.js
-  index.js
+  index.ts
 ```
 
 ## Deep-dive documentation

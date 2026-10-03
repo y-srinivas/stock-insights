@@ -1,5 +1,12 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import type {
+  CreateStockAgentsOptions,
+  LlmInvokeMessage,
+  LlmInvokeResponse,
+  ModelInvoker,
+  StockWorkflowState,
+} from "../types/workflow.d.ts";
 
 import {
   GITHUB_MODELS_BASE_URL,
@@ -34,7 +41,7 @@ const llm = apiKey
     })
   : null;
 
-function toText(content) {
+function toText(content: unknown): string {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content.map((part) => (typeof part === "string" ? part : part?.text || "")).join("\n");
@@ -42,7 +49,7 @@ function toText(content) {
   return String(content ?? "");
 }
 
-function buildResearchFallback(snapshot) {
+function buildResearchFallback(snapshot: StockWorkflowState["marketData"]): string {
   const price = snapshot.price ?? "N/A";
   const changePercent = snapshot.changePercent ?? 0;
   const sentiment = changePercent >= 0 ? "bullish" : "cautious";
@@ -60,7 +67,7 @@ function buildResearchFallback(snapshot) {
   ].join("\n");
 }
 
-function buildRiskFallback(snapshot) {
+function buildRiskFallback(snapshot: StockWorkflowState["marketData"]): string {
   const changePercent = snapshot.changePercent ?? 0;
   const volatility = Math.abs(changePercent) > 3 ? "above-average volatility" : "moderate volatility";
 
@@ -73,7 +80,7 @@ function buildRiskFallback(snapshot) {
   ].join("\n");
 }
 
-function buildSummaryFallback(snapshot, research, risk) {
+function buildSummaryFallback(snapshot: StockWorkflowState["marketData"], research: string, risk: string): string {
   return [
     `Stock insight: ${snapshot.symbol} (${snapshot.name})`,
     "",
@@ -85,12 +92,12 @@ function buildSummaryFallback(snapshot, research, risk) {
   ].join("\n");
 }
 
-function formatValue(value, suffix = "") {
+function formatValue(value: unknown, suffix = ""): string {
   if (value === null || value === undefined || Number.isNaN(value)) return "N/A";
   return `${value}${suffix}`;
 }
 
-function buildKeyFigures(snapshot) {
+function buildKeyFigures(snapshot: StockWorkflowState["marketData"]): string {
   return [
     `Key figures for ${snapshot.symbol}:`,
     `- Current price: ${formatValue(snapshot.price)} ${snapshot.currency || ""}`.trim(),
@@ -103,7 +110,7 @@ function buildKeyFigures(snapshot) {
   ].join("\n");
 }
 
-function combineWithKeyFigures(snapshot, modelOrFallbackAnswer) {
+function combineWithKeyFigures(snapshot: StockWorkflowState["marketData"], modelOrFallbackAnswer: string): string {
   return [
     buildKeyFigures(snapshot),
     "",
@@ -111,11 +118,11 @@ function combineWithKeyFigures(snapshot, modelOrFallbackAnswer) {
   ].join("\n");
 }
 
-function isValidInvoker(modelInvoker) {
+function isValidInvoker(modelInvoker: unknown): modelInvoker is ModelInvoker {
   return typeof modelInvoker === "function";
 }
 
-async function invokeModel(messages, modelInvoker) {
+async function invokeModel(messages: LlmInvokeMessage[], modelInvoker: ModelInvoker | undefined): Promise<LlmInvokeResponse | null> {
   if (isValidInvoker(modelInvoker)) {
     return modelInvoker(messages);
   }
@@ -124,10 +131,24 @@ async function invokeModel(messages, modelInvoker) {
     return null;
   }
 
-  return llm.invoke(messages);
+  return llm.invoke(messages as any);
 }
 
-async function callModelWithFallback({ prompt, payload, fallbackText, state, fieldName, modelInvoker }) {
+async function callModelWithFallback({
+  prompt,
+  payload,
+  fallbackText,
+  state,
+  fieldName,
+  modelInvoker,
+}: {
+  prompt: string;
+  payload: string;
+  fallbackText: string;
+  state: StockWorkflowState;
+  fieldName: "research" | "risk";
+  modelInvoker?: ModelInvoker;
+}): Promise<StockWorkflowState> {
   if (!llm && !isValidInvoker(modelInvoker)) {
     return { ...state, [fieldName]: fallbackText };
   }
@@ -149,10 +170,10 @@ async function callModelWithFallback({ prompt, payload, fallbackText, state, fie
   }
 }
 
-export function createStockAgents(options = {}) {
+export function createStockAgents(options: CreateStockAgentsOptions = {}) {
   const modelInvoker = options.modelInvoker;
 
-  async function researchAgentImpl(state) {
+  async function researchAgentImpl(state: StockWorkflowState): Promise<StockWorkflowState> {
     const snapshot = state.marketData;
     const researchPrompt = `You are a fundamental research analyst. Review the stock data and give a concise investment summary with trend, valuation, and momentum notes.`;
     const fallback = buildResearchFallback(snapshot);
@@ -167,7 +188,7 @@ export function createStockAgents(options = {}) {
     });
   }
 
-  async function riskAgentImpl(state) {
+  async function riskAgentImpl(state: StockWorkflowState): Promise<StockWorkflowState> {
     const snapshot = state.marketData;
     const riskPrompt = `You are a risk analyst. Identify downside risks, volatility, and portfolio risk concerns for this stock using the market snapshot.`;
     const fallback = buildRiskFallback(snapshot);
@@ -182,7 +203,7 @@ export function createStockAgents(options = {}) {
     });
   }
 
-  async function summaryAgentImpl(state) {
+  async function summaryAgentImpl(state: StockWorkflowState): Promise<StockWorkflowState> {
     const snapshot = state.marketData;
     const summaryPrompt = `You are a portfolio strategist. Produce a final analysis that blends trend, valuation, and risk into a single actionable answer.`;
     const fallback = buildSummaryFallback(snapshot, state.research, state.risk);

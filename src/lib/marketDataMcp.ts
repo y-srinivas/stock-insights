@@ -5,14 +5,17 @@ import {
   MCP_TOOL_STOCK_SNAPSHOT,
   MCP_TOOL_SYMBOL_SEARCH,
 } from "../config.js";
+import type { MarketDataSnapshot, SymbolSearchResult } from "../types/marketData.d.ts";
 
-function withTimeout(ms) {
+type MappedResult = { content?: Array<{ type?: string; json?: unknown; text?: string }> };
+
+function withTimeout(ms: number): { controller: AbortController; timeoutId: NodeJS.Timeout } {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ms);
   return { controller, timeoutId };
 }
 
-function parseMaybeJson(value) {
+function parseMaybeJson(value: unknown): unknown {
   if (typeof value !== "string") {
     return value;
   }
@@ -24,7 +27,7 @@ function parseMaybeJson(value) {
   }
 }
 
-function extractStructuredContent(result) {
+function extractStructuredContent(result: MappedResult | null | undefined): unknown {
   if (!result || typeof result !== "object") {
     return null;
   }
@@ -47,7 +50,7 @@ function extractStructuredContent(result) {
   return result;
 }
 
-async function callMcpTool(toolName, args) {
+async function callMcpTool(toolName: string, args: Record<string, unknown>): Promise<unknown> {
   if (!MCP_SERVER_URL) {
     throw new Error("MCP_SERVER_URL is required when MARKET_DATA_PROVIDER=mcp.");
   }
@@ -55,7 +58,7 @@ async function callMcpTool(toolName, args) {
   const { controller, timeoutId } = withTimeout(MCP_REQUEST_TIMEOUT_MS);
 
   try {
-    const headers = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Accept: "application/json",
     };
@@ -84,7 +87,7 @@ async function callMcpTool(toolName, args) {
       throw new Error(`MCP HTTP ${response.status}: ${text}`);
     }
 
-    const payload = await response.json();
+    const payload = await response.json() as { error?: { message?: string }; result?: unknown };
     if (payload.error) {
       throw new Error(payload.error.message || "MCP tool call failed");
     }
@@ -95,36 +98,45 @@ async function callMcpTool(toolName, args) {
   }
 }
 
-export async function getStockSnapshotFromMcp(symbol) {
+export async function getStockSnapshotFromMcp(symbol: string): Promise<MarketDataSnapshot | null> {
   const result = await callMcpTool(MCP_TOOL_STOCK_SNAPSHOT, { symbol });
-  if (!result || typeof result !== "object") {
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
     return null;
   }
 
-  if (result.marketData && typeof result.marketData === "object") {
-    return result.marketData;
+  const resultObject = result as Record<string, unknown>;
+  if (resultObject.marketData && typeof resultObject.marketData === "object" && !Array.isArray(resultObject.marketData)) {
+    return resultObject.marketData as MarketDataSnapshot;
   }
 
-  return result;
+  return resultObject as unknown as MarketDataSnapshot;
 }
 
-export async function searchSymbolsFromMcp(query) {
+export async function searchSymbolsFromMcp(query: string): Promise<SymbolSearchResult[]> {
   const result = await callMcpTool(MCP_TOOL_SYMBOL_SEARCH, { query });
 
-  if (!result || typeof result !== "object") {
+  if (!result || typeof result !== "object" || Array.isArray(result)) {
     return [];
   }
 
+  const resultObject = result as Record<string, unknown>;
+  const matches = Array.isArray(resultObject.matches) ? resultObject.matches : [];
+  const rawResult = Array.isArray(resultObject.result) ? resultObject.result : [];
+  const symbols = Array.isArray(resultObject.symbols) ? resultObject.symbols : [];
+
   const candidates =
-    (Array.isArray(result.matches) && result.matches) ||
-    (Array.isArray(result.result) && result.result) ||
-    (Array.isArray(result.symbols) && result.symbols) ||
+    (matches.length > 0 ? matches : null) ||
+    (rawResult.length > 0 ? rawResult : null) ||
+    (symbols.length > 0 ? symbols : null) ||
     [];
 
-  return candidates.slice(0, 10).map((item) => ({
-    symbol: item.symbol || item.ticker || "",
-    description: item.description || item.name || "",
-    type: item.type || "",
-    displaySymbol: item.displaySymbol || item.symbol || item.ticker || "",
-  }));
+  return candidates.slice(0, 10).map((item) => {
+    const row = (item && typeof item === "object") ? item as Record<string, unknown> : {};
+    return {
+      symbol: String(row.symbol || row.ticker || ""),
+      description: String(row.description || row.name || ""),
+      type: String(row.type || ""),
+      displaySymbol: String(row.displaySymbol || row.symbol || row.ticker || ""),
+    };
+  });
 }

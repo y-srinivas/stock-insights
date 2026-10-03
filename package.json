@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Multi-agent stock insights workflow built with Node.js and LangGraph.",
-  "main": "src/server.js",
+  "main": "src/server.ts",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
-    "cli": "node src/index.js",
-    "eval": "node eval/runEvals.js",
-    "eval:scenario": "node eval/runEvals.js",
-    "check": "node --check src/index.js && node --check src/server.js && node --check src/workflow/stockWorkflow.js && node --check src/agents/stockAgents.js && node --check src/lib/marketData.js && node --check src/lib/marketDataMcp.js && node --check eval/runEvals.js && node --check eval/scenarios.js && node --check eval/assertions.js"
+    "start": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "cli": "tsx src/index.ts",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "eval": "tsx eval/runEvals.ts",
+    "eval:scenario": "tsx eval/runEvals.ts",
+    "check": "npm run typecheck && node --check eval/scenarios.js && node --check eval/assertions.js"
   },
   "dependencies": {
     "@langchain/core": "^0.3.68",
@@ -20,5 +22,10 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "finnhub": "^2.0.15"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "tsx": "^4.20.6",
+    "typescript": "^7.0.2"
   }
 }

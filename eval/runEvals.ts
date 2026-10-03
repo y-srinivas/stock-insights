@@ -5,15 +5,52 @@ import { createStockAgents } from "../src/agents/stockAgents.js";
 import { runStockWorkflow } from "../src/workflow/stockWorkflow.js";
 import { runAssertions } from "./assertions.js";
 import { scenarios } from "./scenarios.js";
+import type { StockWorkflowState } from "../src/types/workflow.d.ts";
 
-function parseArgs() {
+type LlmPlanCall = {
+  type: "success" | "failure";
+  content?: string;
+  error?: string;
+};
+
+type EvalScenario = {
+  id: string;
+  description: string;
+  input: { symbol: string; message: string };
+  snapshot: StockWorkflowState["marketData"];
+  llmPlan?: { calls: LlmPlanCall[] } | null;
+  expectations?: { expectFailure?: boolean } & Record<string, unknown>;
+};
+
+type AssertionResult = {
+  passed: boolean;
+  failures: string[];
+  stats: Record<string, unknown>;
+};
+
+type ScenarioOutcome = {
+  passed: boolean;
+  expected: "pass" | "failure";
+  actual: "pass" | "failure";
+};
+
+type EvalResult = {
+  id: string;
+  description: string;
+  input: EvalScenario["input"];
+  workflowResult: StockWorkflowState;
+  assertions: AssertionResult;
+  outcome: ScenarioOutcome;
+};
+
+function parseArgs(): { scenarioId: string | null } {
   const args = process.argv.slice(2);
   const scenarioArg = args.find((arg) => arg.startsWith("--scenario="));
   const scenarioId = scenarioArg ? scenarioArg.split("=")[1] : null;
   return { scenarioId };
 }
 
-function createModelInvoker(llmPlan) {
+function createModelInvoker(llmPlan: EvalScenario["llmPlan"]) {
   if (!llmPlan || !Array.isArray(llmPlan.calls)) {
     return null;
   }
@@ -31,7 +68,7 @@ function createModelInvoker(llmPlan) {
   };
 }
 
-function selectScenarios(allScenarios, scenarioId) {
+function selectScenarios(allScenarios: EvalScenario[], scenarioId: string | null): EvalScenario[] {
   if (!scenarioId) {
     return allScenarios;
   }
@@ -39,7 +76,7 @@ function selectScenarios(allScenarios, scenarioId) {
   return allScenarios.filter((scenario) => scenario.id === scenarioId);
 }
 
-function normalizeExpectedOutcome(assertionResult, scenario) {
+function normalizeExpectedOutcome(assertionResult: AssertionResult, scenario: EvalScenario): ScenarioOutcome {
   const expectFailure = Boolean(scenario.expectations?.expectFailure);
   const actualPass = assertionResult.passed;
 
@@ -64,7 +101,7 @@ function ensureReportsDir() {
   return reportDir;
 }
 
-function printSummary(results) {
+function printSummary(results: EvalResult[]): void {
   const rows = results.map((result) => ({
     scenario: result.id,
     expected: result.outcome.expected,
@@ -75,16 +112,16 @@ function printSummary(results) {
   console.table(rows);
 }
 
-async function runScenario(scenario) {
+async function runScenario(scenario: EvalScenario): Promise<EvalResult> {
   const modelInvoker = createModelInvoker(scenario.llmPlan);
   const agents = createStockAgents({ modelInvoker });
 
-  const workflowResult = await runStockWorkflow(scenario.input.symbol, {
+  const workflowResult = (await runStockWorkflow(scenario.input.symbol, {
     getSnapshot: async () => scenario.snapshot,
     agents,
-  });
+  })) as StockWorkflowState;
 
-  const assertionResult = runAssertions({ scenario, workflowResult });
+  const assertionResult = runAssertions({ scenario, workflowResult }) as AssertionResult;
   const outcome = normalizeExpectedOutcome(assertionResult, scenario);
 
   return {
@@ -99,14 +136,14 @@ async function runScenario(scenario) {
 
 async function main() {
   const { scenarioId } = parseArgs();
-  const activeScenarios = selectScenarios(scenarios, scenarioId);
+  const activeScenarios = selectScenarios(scenarios as EvalScenario[], scenarioId);
 
   if (activeScenarios.length === 0) {
     console.error(`No scenarios found for selector: ${scenarioId}`);
     process.exit(1);
   }
 
-  const results = [];
+  const results: EvalResult[] = [];
 
   for (const scenario of activeScenarios) {
     const result = await runScenario(scenario);
@@ -142,7 +179,7 @@ async function main() {
   console.log(`Report written to ${reportPath}`);
 }
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   console.error("Eval runner failed:", error);
   process.exit(1);
 });
