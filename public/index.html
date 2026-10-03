@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Insights Chat</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <h1>Stock Insights</h1>
+        <div class="controls">
+          <label for="symbolInput">Ticker</label>
+          <input id="symbolInput" type="text" value="AAPL" maxlength="10" />
+        </div>
+        <div class="sample-chips">
+          <button class="chip" data-symbol="AAPL">AAPL</button>
+          <button class="chip" data-symbol="MSFT">MSFT</button>
+          <button class="chip" data-symbol="NVDA">NVDA</button>
+          <button class="chip" data-symbol="TSLA">TSLA</button>
+        </div>
+        <p style="margin-top: 16px;">
+          <a href="/local-agent-test.html" style="color: #93c5fd;">Open local agent tester</a>
+        </p>
+      </aside>
+
+      <main class="chat-panel">
+        <div id="chatMessages" class="chat-messages" aria-live="polite">
+          <div class="message bot">
+            <div class="bubble">
+              Ask about a stock trend, risk profile, or investment thesis. I’ll analyze the latest market snapshot and summarise the view.
+            </div>
+          </div>
+        </div>
+
+        <form id="chatForm" class="chat-form">
+          <input
+            id="messageInput"
+            type="text"
+            placeholder="Ask: Is AAPL bullish this month?"
+            autocomplete="off"
+          />
+          <button type="submit">Send</button>
+        </form>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

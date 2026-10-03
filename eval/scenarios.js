@@ -1,0 +1,163 @@
+function makeSnapshot(overrides = {}) {
+  return {
+    symbol: "AAPL",
+    name: "Apple Inc.",
+    price: 222.5,
+    previousClose: 220.0,
+    change: 2.5,
+    changePercent: 1.14,
+    dayHigh: 223.2,
+    dayLow: 219.8,
+    open: 220.5,
+    marketCap: 3400000000000,
+    currency: "USD",
+    peRatio: null,
+    dividendYield: null,
+    fiftyTwoWeekHigh: null,
+    fiftyTwoWeekLow: null,
+    isMarketOpen: true,
+    chartPoints: [],
+    fallback: false,
+    ...overrides,
+  };
+}
+
+export const scenarios = [
+  {
+    id: "full-data-llm-success",
+    description: "Full market snapshot with deterministic LLM responses",
+    input: { symbol: "AAPL", message: "Give me a quick read on AAPL" },
+    snapshot: makeSnapshot(),
+    llmPlan: {
+      calls: [
+        { type: "success", content: "Research: momentum is positive based on latest move." },
+        { type: "success", content: "Risk: downside risk is moderate with watch on volatility." },
+        { type: "success", content: "Final: constructive view with risk-aware sizing." },
+      ],
+    },
+    expectations: {
+      mustInclude: ["Key figures for AAPL:", "Final: constructive view"],
+      mustNotInclude: ["N/A %"],
+      requireKeyFigures: true,
+      requireGroundedNumbers: true,
+    },
+  },
+  {
+    id: "summary-llm-failure-fallback",
+    description: "Research and risk succeed while summary LLM call fails",
+    input: { symbol: "MSFT", message: "What is the latest picture for MSFT?" },
+    snapshot: makeSnapshot({
+      symbol: "MSFT",
+      name: "Microsoft Corporation",
+      price: 428.2,
+      previousClose: 430.1,
+      change: -1.9,
+      changePercent: -0.44,
+      dayHigh: 431.0,
+      dayLow: 426.8,
+      open: 429.4,
+      marketCap: 3200000000000,
+    }),
+    llmPlan: {
+      calls: [
+        { type: "success", content: "Research: valuation remains premium but stable." },
+        { type: "success", content: "Risk: short-term pullback risk is elevated." },
+        { type: "failure", error: "Injected summary failure" },
+      ],
+    },
+    expectations: {
+      mustInclude: ["Key figures for MSFT:", "Stock insight: MSFT (Microsoft Corporation)"],
+      requireKeyFigures: true,
+      requireGroundedNumbers: true,
+    },
+  },
+  {
+    id: "fallback-snapshot-no-llm",
+    description: "Snapshot already marked fallback and no LLM invoker configured",
+    input: { symbol: "TSLA", message: "Summarize TSLA risks" },
+    snapshot: makeSnapshot({
+      symbol: "TSLA",
+      name: "TSLA",
+      fallback: true,
+      price: 250,
+      previousClose: 247.5,
+      change: 2.5,
+      changePercent: 1.01,
+      dayHigh: 252,
+      dayLow: 246,
+      open: 248,
+      marketCap: 800000000000,
+    }),
+    llmPlan: {
+      calls: [
+        { type: "failure", error: "Injected research failure" },
+        { type: "failure", error: "Injected risk failure" },
+        { type: "failure", error: "Injected summary failure" },
+      ],
+    },
+    expectations: {
+      mustInclude: ["Key figures for TSLA:", "Stock insight: TSLA (TSLA)"],
+      requireKeyFigures: true,
+      expectFallbackSnapshot: true,
+    },
+  },
+  {
+    id: "unsupported-number-detection",
+    description: "Injected hallucinated number should fail grounded number assertion",
+    input: { symbol: "NVDA", message: "Give me final recommendation for NVDA" },
+    snapshot: makeSnapshot({
+      symbol: "NVDA",
+      name: "NVIDIA Corporation",
+      price: 145.5,
+      previousClose: 144.1,
+      change: 1.4,
+      changePercent: 0.97,
+      dayHigh: 146.2,
+      dayLow: 143.8,
+      open: 144.3,
+      marketCap: 3600000000000,
+    }),
+    llmPlan: {
+      calls: [
+        { type: "success", content: "Research: broad momentum remains positive." },
+        { type: "success", content: "Risk: valuation is rich and can retrace." },
+        { type: "success", content: "Final: target upside is 999.99 next week." },
+      ],
+    },
+    expectations: {
+      mustInclude: ["Key figures for NVDA:"],
+      requireKeyFigures: true,
+      requireGroundedNumbers: true,
+      expectFailure: true,
+    },
+  },
+  {
+    id: "missing-fields-marked-na",
+    description: "Null numeric values are rendered as N/A in key figures",
+    input: { symbol: "ABCD", message: "Show key figures for ABCD" },
+    snapshot: makeSnapshot({
+      symbol: "ABCD",
+      name: "ABCD Holdings",
+      price: null,
+      previousClose: null,
+      change: null,
+      changePercent: null,
+      dayHigh: null,
+      dayLow: null,
+      open: null,
+      marketCap: null,
+      currency: "USD",
+    }),
+    llmPlan: {
+      calls: [
+        { type: "success", content: "Research: data is sparse; treat as watchlist only." },
+        { type: "success", content: "Risk: uncertainty is high due to missing data." },
+        { type: "success", content: "Final: no active trade recommendation until data improves." },
+      ],
+    },
+    expectations: {
+      mustInclude: ["Key figures for ABCD:", "Current price: N/A USD", "Market cap: N/A"],
+      requireKeyFigures: true,
+    },
+  },
+];
