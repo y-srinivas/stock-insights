@@ -3,6 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { StockWorkflowState } from "./types/workflow.d.ts";
 
+import { FileMonitorRepository } from "./monitoring/fileMonitorRepository.ts";
+import { EmailDigestNotifier } from "./monitoring/emailDigestNotifier.ts";
+import { MonitorScheduler } from "./monitoring/monitorScheduler.ts";
+import { MonitorService } from "./monitoring/monitorService.ts";
+import { createMonitorRouter } from "./routes/monitorRoutes.ts";
 import { runStockWorkflow } from "./workflow/stockWorkflow.ts";
 
 const app = express();
@@ -11,12 +16,23 @@ const preferredPort = Number(process.env.PORT || 3000);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, "../public");
+const monitorRepository = new FileMonitorRepository();
+const monitorService = new MonitorService({
+  repository: monitorRepository,
+  notifier: new EmailDigestNotifier(),
+});
+const monitorScheduler = new MonitorScheduler(monitorService);
 
 app.use(express.json());
 app.use(express.static(publicDir));
+app.use("/api", createMonitorRouter({ monitorService, monitorScheduler }));
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", service: "stock-insights-agent" });
+  res.json({
+    status: "ok",
+    service: "stock-insights-agent",
+    monitoring: monitorScheduler.getStatus(),
+  });
 });
 
 function extractTickerFromText(text: string): string | null {
@@ -79,6 +95,7 @@ app.get("*", (req, res) => {
 
 function startServer(port: number, attemptsLeft = 10): void {
   const server = app.listen(port, () => {
+    monitorScheduler.start();
     console.log(`Stock insights chat UI is running at http://localhost:${port}`);
   });
 

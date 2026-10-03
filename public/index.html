@@ -10,18 +10,57 @@
     <div class="app-shell">
       <aside class="sidebar">
         <h1>Stock Insights</h1>
-        <div class="controls">
+        <section class="sidebar-section">
+          <h2>Chat</h2>
+          <div class="controls">
           <label for="symbolInput">Ticker</label>
           <input id="symbolInput" type="text" value="AAPL" maxlength="10" />
-        </div>
-        <div class="sample-chips">
-          <button class="chip" data-symbol="AAPL">AAPL</button>
-          <button class="chip" data-symbol="MSFT">MSFT</button>
-          <button class="chip" data-symbol="NVDA">NVDA</button>
-          <button class="chip" data-symbol="TSLA">TSLA</button>
-        </div>
-        <p style="margin-top: 16px;">
-          <a href="/local-agent-test.html" style="color: #93c5fd;">Open local agent tester</a>
+          </div>
+          <div class="sample-chips">
+            <button class="chip" data-symbol="AAPL" type="button">AAPL</button>
+            <button class="chip" data-symbol="MSFT" type="button">MSFT</button>
+            <button class="chip" data-symbol="NVDA" type="button">NVDA</button>
+            <button class="chip" data-symbol="TSLA" type="button">TSLA</button>
+          </div>
+        </section>
+
+        <section class="sidebar-section">
+          <div class="section-header">
+            <h2>Daily Email</h2>
+            <span id="schedulerStatus" class="status-pill">Loading</span>
+          </div>
+          <form id="settingsForm" class="stack-form">
+            <label for="notificationEmailInput">Digest recipient</label>
+            <input id="notificationEmailInput" type="email" placeholder="alerts@example.com" autocomplete="email" />
+            <button type="submit">Save email</button>
+          </form>
+          <dl class="meta-list">
+            <div>
+              <dt>Next run</dt>
+              <dd id="nextRunValue">-</dd>
+            </div>
+            <div>
+              <dt>Last digest</dt>
+              <dd id="lastDigestValue">-</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="sidebar-section">
+          <h2>Watchlist</h2>
+          <form id="monitorForm" class="stack-form">
+            <label for="monitorSymbolInput">Symbol</label>
+            <input id="monitorSymbolInput" type="text" maxlength="10" placeholder="AAPL" />
+            <label for="dipThresholdInput">Dip threshold %</label>
+            <input id="dipThresholdInput" type="number" min="0.1" step="0.1" value="5" />
+            <button type="submit">Add stock</button>
+          </form>
+          <div id="monitorFeedback" class="feedback" aria-live="polite"></div>
+          <div id="monitorList" class="monitor-list"></div>
+        </section>
+
+        <p class="sidebar-link">
+          <a href="/local-agent-test.html">Open local agent tester</a>
         </p>
       </aside>
 
@@ -43,6 +82,13 @@
           />
           <button type="submit">Send</button>
         </form>
+
+        <section class="alerts-panel">
+          <div class="section-header">
+            <h2>Recent Alerts</h2>
+          </div>
+          <div id="alertsList" class="alerts-list"></div>
+        </section>
       </main>
     </div>
 

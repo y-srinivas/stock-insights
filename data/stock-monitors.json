@@ -1,0 +1,33 @@
+{
+  "settings": {
+    "pollIntervalMinutes": 120,
+    "timezone": "America/New_York",
+    "marketWindowStart": "09:30",
+    "marketWindowEnd": "16:30",
+    "schedulerEnabled": true,
+    "notificationEmail": "srinu.y84@gmail.com"
+  },
+  "digest": {
+    "lastSentDate": null,
+    "lastSentAt": null
+  },
+  "monitors": [
+    {
+      "symbol": "AMD",
+      "displayName": "Advanced Micro Devices Inc",
+      "enabled": true,
+      "dipThresholdPercent": 5,
+      "baselineMode": "previous-close",
+      "baselinePrice": null,
+      "lastObservedPrice": null,
+      "lastCheckedAt": null,
+      "lastAlertedAt": null,
+      "lastAlertedDipPercent": null,
+      "alertState": "clear",
+      "createdAt": "2026-10-03T01:37:34.081Z",
+      "updatedAt": "2026-10-03T01:37:34.081Z"
+    }
+  ],
+  "alerts": [],
+  "observations": []
+}

@@ -2,14 +2,17 @@
   --bg: #0b1220;
   --panel: #111b2d;
   --panel-alt: #172742;
+  --panel-soft: rgba(255, 255, 255, 0.035);
   --primary: #6ea8fe;
   --primary-strong: #3b82f6;
+  --accent: #f59e0b;
   --text: #edf4ff;
   --muted: #b2c4df;
   --border: rgba(255, 255, 255, 0.08);
   --bot: #172742;
   --user: #1d4ed8;
   --success: #1cc88a;
+  --danger: #f87171;
 }
 
 * {
@@ -34,11 +37,47 @@ body {
   background: rgba(11, 18, 32, 0.9);
   border-right: 1px solid var(--border);
   padding: 24px 18px;
+  overflow-y: auto;
 }
 
 .sidebar h1 {
   margin: 0 0 24px;
   font-size: 1.8rem;
+}
+
+.sidebar-section {
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  border-radius: 18px;
+  margin-bottom: 16px;
+}
+
+.sidebar-section h2,
+.alerts-panel h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.status-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.status-pill[data-state="active"] {
+  color: #dcfce7;
+  background: rgba(34, 197, 94, 0.18);
 }
 
 .controls {
@@ -77,6 +116,121 @@ body {
   border-radius: 999px;
   padding: 8px 12px;
   cursor: pointer;
+}
+
+.stack-form {
+  display: grid;
+  gap: 10px;
+}
+
+.stack-form label,
+.meta-list dt,
+.monitor-meta dt {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stack-form input,
+.stack-form button {
+  width: 100%;
+}
+
+.stack-form input {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+}
+
+.stack-form button,
+.remove-monitor {
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: white;
+  padding: 12px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feedback {
+  min-height: 1.2rem;
+  margin: 10px 0 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.feedback[data-tone="success"] {
+  color: var(--success);
+}
+
+.feedback[data-tone="error"] {
+  color: var(--danger);
+}
+
+.meta-list,
+.monitor-meta {
+  margin: 14px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.meta-list div,
+.monitor-meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meta-list dd,
+.monitor-meta dd {
+  margin: 0;
+  color: var(--text);
+  text-align: right;
+}
+
+.monitor-list,
+.alerts-list {
+  display: grid;
+  gap: 12px;
+}
+
+.monitor-card,
+.alert-row,
+.alerts-panel {
+  border: 1px solid var(--border);
+  background: var(--panel-soft);
+  border-radius: 18px;
+}
+
+.monitor-card {
+  padding: 14px;
+}
+
+.monitor-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.monitor-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.remove-monitor {
+  width: auto;
+  padding: 9px 12px;
+  background: rgba(248, 113, 113, 0.18);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.35);
 }
 
 .chat-panel {
@@ -156,6 +310,49 @@ body {
   cursor: not-allowed;
 }
 
+.alerts-panel {
+  margin: 0 24px 24px;
+  padding: 18px;
+}
+
+.alert-row {
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 14px;
+  align-items: start;
+}
+
+.alert-symbol {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.alert-copy strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.alert-copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.alert-row time {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.empty-state,
+.sidebar-link a {
+  color: var(--muted);
+}
+
+.sidebar-link {
+  margin: 0;
+  padding: 8px 2px 24px;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -167,6 +364,11 @@ body {
   }
 
   .chat-panel {
-    height: calc(100vh - 180px);
+    height: auto;
+    min-height: calc(100vh - 180px);
+  }
+
+  .alert-row {
+    grid-template-columns: 1fr;
   }
 }

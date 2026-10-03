@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import path from "node:path";
 
 dotenv.config();
 
@@ -17,3 +18,17 @@ export const MCP_TOOL_SYMBOL_SEARCH = process.env.MCP_TOOL_SYMBOL_SEARCH || "sea
 export const MCP_REQUEST_TIMEOUT_MS = Number(process.env.MCP_REQUEST_TIMEOUT_MS || 8000);
 export const LLM_MODEL = process.env.LLM_MODEL || "gpt-4o-mini";
 export const DEFAULT_SYMBOL = process.env.DEFAULT_SYMBOL || "AAPL";
+export const MONITOR_POLL_INTERVAL_MINUTES = Number(process.env.MONITOR_POLL_INTERVAL_MINUTES || 120);
+export const MONITOR_TIMEZONE = process.env.MONITOR_TIMEZONE || "America/New_York";
+export const MONITOR_WINDOW_START = process.env.MONITOR_WINDOW_START || "09:30";
+export const MONITOR_WINDOW_END = process.env.MONITOR_WINDOW_END || "16:30";
+export const MONITOR_STORAGE_PATH = path.resolve(process.cwd(), process.env.MONITOR_STORAGE_PATH || "./data/stock-monitors.json");
+export const MONITOR_SCHEDULER_ENABLED = (process.env.MONITOR_SCHEDULER_ENABLED || "true").toLowerCase() !== "false";
+export const DEFAULT_DIP_THRESHOLD_PERCENT = Number(process.env.DEFAULT_DIP_THRESHOLD_PERCENT || 5);
+export const MONITOR_NOTIFICATION_EMAIL = process.env.MONITOR_NOTIFICATION_EMAIL || "";
+export const SMTP_HOST = process.env.SMTP_HOST || "";
+export const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+export const SMTP_USER = process.env.SMTP_USER || "";
+export const SMTP_PASS = process.env.SMTP_PASS || "";
+export const SMTP_SECURE = (process.env.SMTP_SECURE || "false").toLowerCase() === "true";
+export const ALERT_EMAIL_FROM = process.env.ALERT_EMAIL_FROM || SMTP_USER || "";

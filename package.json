@@ -21,7 +21,8 @@
     "@langchain/openai": "^0.3.13",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "finnhub": "^2.0.15"
+    "finnhub": "^2.0.15",
+    "nodemailer": "^10.0.13"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",
